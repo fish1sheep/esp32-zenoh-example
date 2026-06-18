@@ -1,0 +1,11 @@
+[project]
+name = "esp32-zenoh-subscriber"
+version = "0.1.0"
+description = "PC-side Python scripts for ESP32 development"
+requires-python = ">=3.8"
+dependencies = [
+    "eclipse-zenoh>=1.0.0",
+]
+
+[tool.uv]
+package = false
