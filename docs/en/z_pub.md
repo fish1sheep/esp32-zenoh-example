@@ -530,7 +530,7 @@ idf.py menuconfig
 | Resource | Link |
 |----------|------|
 | Zenoh Documentation | https://zenoh.io/docs/ |
-| zenoh-pico API | https://zenoh.io/docs/apis/zenoh-pico/ |
+| zenoh-pico API | https://zenoh-pico.readthedocs.io/en/1.9.0/ |
 | ESP-IDF Programming Guide | https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/ |
 | Eclipse Public License 2.0 | https://www.eclipse.org/legal/epl-2.0/ |
 
