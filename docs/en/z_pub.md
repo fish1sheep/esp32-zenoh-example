@@ -17,10 +17,10 @@
 
 ```
 [ESP32-S3] --- WiFi STA ---> [WiFi AP] ----> [Zenoh Network] ---> (Subscribers receive)
-    │                                  │
+    │                                   │
     │ every 1 second                    │
     │ publishes "[N] [ESPIDF]{ESP32} "  │
-    └──────────────────────────────────┘
+    └───────────────────────────────────┘
 ```
 
 ---
