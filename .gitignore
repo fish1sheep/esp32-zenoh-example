@@ -1,0 +1,10 @@
+build/
+.zed/
+.asm-lsp.toml
+.cache/
+REASONIX.md
+.venv
+.clangd
+.clang-format
+sdkconfig.*
+components/*
