@@ -3,6 +3,12 @@
 [![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v6.0.1-blue?logo=espressif)](https://docs.espressif.com/projects/esp-idf/en/v6.0.1/esp32s3/)
 [![Zenoh](https://img.shields.io/badge/Zenoh--pico-v1.9.0-orange)](https://github.com/eclipse-zenoh/zenoh-pico)
 
+## 快速开始
+
+```bash
+git clone https://github.com/fish1sheep/esp32-zenoh-example.git --recurse-submodules
+```
+
 对 [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) 官方 ESP-IDF 示例的讲解，配 PC 端测试脚本，方便学习 ESP32 系列 MCU 通过 Zenoh 协议与 PC 通信。
 
 ## 许可
