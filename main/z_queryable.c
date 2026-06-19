@@ -12,35 +12,36 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 // ============================================================================
-// z_pub.c  —  Zenoh Publisher example  (ESP32-S3)
+// z_queryable.c  —  Zenoh Queryable example (responds to GET queries)  (ESP32-S3)
 //
-// This program demonstrates declaring a Zenoh **publisher** on the
-// ESP32-S3 and publishing an incrementing counter every second.
+// This program demonstrates how to declare a Zenoh **queryable** on the
+// ESP32-S3 — a node that listens for incoming GET requests and replies.
 //
 // Flow:
-//   1) Initialise NVS flash (needed by ESP-IDF's WiFi stack).
-//   2) Connect to WiFi (STA mode, blocking until IP assigned).
+//   1) Initialise NVS flash.
+//   2) Connect to WiFi (STA mode, blocking).
 //   3) Open a Zenoh session (client or peer mode).
-//   4) Declare a publisher on "demo/example/zenoh-pico-pub".
-//   5) Publish an incrementing counter string every second, forever.
+//   4) Declare a queryable on "demo/example/zenoh-pico-queryable".
+//   5) Sleep forever — the query handler runs on each incoming query.
 //
-// What is a "Publisher"?
-// -----------------------
-// In Zenoh, a publisher is a data source that periodically pushes values
-// on a key expression.  Any subscriber listening on that key (or a
-// matching wildcard like "demo/example/**") receives the data.
+// What is a "Queryable"?
+// ----------------------
+// In Zenoh, a Queryable is the server side of the request-response pattern.
+// Another node calls GET on a key expression; our handler receives the
+// query and calls z_query_reply() to send back data.  This is analogous to
+// a REST endpoint handler in an HTTP server.
 //
-// Build requirement: zenoh-pico must be compiled with Z_FEATURE_PUBLICATION
+// Build requirement: zenoh-pico must be compiled with Z_FEATURE_QUERYABLE
 // enabled (see the #if guard below).
 // ============================================================================
 
 #include <esp_event.h>  /* ESP-IDF event loop — WiFi lifecycle */
 #include <esp_log.h>    /* ESP-IDF logging */
 #include <esp_system.h> /* ESP-IDF system API */
-#include <esp_wifi.h>   /* WiFi driver — STA / AP mode */
+#include <esp_wifi.h>   /* WiFi driver */
 
 /* Standard C */
-#include <stdio.h>  /* printf / sprintf */
+#include <stdio.h>  /* printf / fprintf */
 #include <stdlib.h> /* exit */
 #include <string.h> /* strcmp */
 
@@ -50,24 +51,23 @@
 #include <zenoh-pico.h> /* Zenoh client library */
 
 /* FreeRTOS */
-#include <freertos/FreeRTOS.h>     /* Kernel types */
-#include <freertos/event_groups.h> /* Event groups for WiFi sync */
+#include <freertos/FreeRTOS.h>     /* Kernel */
+#include <freertos/event_groups.h> /* Event groups */
 #include <freertos/task.h>         /* Task API */
 
 // ============================================================================
 // Compile-time feature guard
 // ============================================================================
-// The publication feature can be compiled out of zenoh-pico to save
-// firmware space.  This guard prevents link-time failures.
-#if Z_FEATURE_PUBLICATION == 1
+#if Z_FEATURE_QUERYABLE == 1
 
 // ============================================================================
 // WiFi configuration  (compile-time constants)
 // ============================================================================
-#define ESP_WIFI_SSID "SSID"             /* WiFi SSID to connect to      */
-#define ESP_WIFI_PASS "PASS"             /* WiFi password                */
-#define ESP_MAXIMUM_RETRY 5              /* Max retries on disconnect    */
-#define WIFI_CONNECTED_BIT BIT0          /* Event group bit: "Got IP"    */
+// [NOTE] Use NVS or a config file for production.
+#define ESP_WIFI_SSID "SSID"             /* WiFi SSID           */
+#define ESP_WIFI_PASS "PASS"             /* WiFi password       */
+#define ESP_MAXIMUM_RETRY 5              /* Max WiFi retries    */
+#define WIFI_CONNECTED_BIT BIT0          /* Event group: "Got IP" */
 
 // ============================================================================
 // Global state  (shared between event handler and main loop)
@@ -79,13 +79,13 @@ static int                s_retry_count = 0;
 // ============================================================================
 // Session mode select  (client vs. peer)
 // ============================================================================
-// Controls how the ESP32 joins the Zenoh network:
-//   0  →  Client mode: connect to a Zenoh router (or auto-discover).
-//   1  →  Peer mode:   listen on a UDP multicast address.
+// Controls how the ESP32 joins the Zenoh network.
+//   Client mode: connect to a Zenoh router (or auto-discover via scout).
+//   Peer mode:   listen on a UDP multicast address.
 #define CLIENT_OR_PEER 0  // 0 = client, 1 = peer
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
-#define LOCATOR ""  /* Empty → scout for router automatically */
+#define LOCATOR ""  /* Empty → scout for router */
 #elif CLIENT_OR_PEER == 1
 #define MODE "peer"
 #define LOCATOR "udp/224.0.0.225:7447#iface=en0"
@@ -94,28 +94,29 @@ static int                s_retry_count = 0;
 #endif
 
 // ============================================================================
-// Zenoh key expression and publishing template
+// Zenoh key expression and default reply value
 // ============================================================================
-#define KEYEXPR "demo/example/zenoh-pico-pub"  /* Topic to publish on    */
-#define VALUE                                     \
-    "[ESPIDF]{ESP32} Publication from Zenoh-Pico!" /* Message template   */
+#define KEYEXPR "demo/example/zenoh-pico-queryable"
+#define VALUE "[ESPIDF]{ESP32} Queryable from Zenoh-Pico!"
 
 // ============================================================================
 // WiFi event callback
 // ============================================================================
-// ESP-IDF fires these during the WiFi lifecycle.
+// Fired by ESP-IDF on WiFi / IP state transitions.
+//   GOT_IP  →  signals the waiting task to continue.
+//   DISCONNECTED  →  retries up to ESP_MAXIMUM_RETRY times.
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
     {
-        /* WiFi driver initialised — begin association */
+        /* WiFi driver ready — start association */
         esp_wifi_connect();
     }
     else if (event_base == WIFI_EVENT &&
              event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
-        /* Connection dropped — retry up to the limit */
+        /* Link lost — retry if under the limit */
         if (s_retry_count < ESP_MAXIMUM_RETRY)
         {
             esp_wifi_connect();
@@ -124,30 +125,26 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
     {
-        /* DHCP lease obtained — signal the waiting task */
+        /* DHCP success — signal app_main */
         xEventGroupSetBits(s_event_group_handler, WIFI_CONNECTED_BIT);
         s_retry_count = 0;
     }
 }
 
 // ============================================================================
-// WiFi initialisation (blocking — returns only after IP assigned)
+// WiFi STA initialisation  (blocking — returns only after DHCP success)
 // ============================================================================
 void wifi_init_sta(void)
 {
-    /* Create event group for WiFi synchronisation */
     s_event_group_handler = xEventGroupCreate();
 
-    /* Initialise the TCP/IP stack + event loop + STA netif */
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
 
-    /* WiFi driver init */
     wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&config));
 
-    /* Register event handlers for WiFi link events + IP layer */
     esp_event_handler_instance_t handler_any_id;
     esp_event_handler_instance_t handler_got_ip;
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
@@ -155,7 +152,6 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
         IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &handler_got_ip));
 
-    /* Configure SSID and password */
     wifi_config_t wifi_config = {.sta = {
                                      .ssid     = ESP_WIFI_SSID,
                                      .password = ESP_WIFI_PASS,
@@ -165,7 +161,6 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    /* Block until GOT_IP event fires */
     EventBits_t bits =
         xEventGroupWaitBits(s_event_group_handler, WIFI_CONNECTED_BIT, pdFALSE,
                             pdFALSE, portMAX_DELAY);
@@ -175,7 +170,6 @@ void wifi_init_sta(void)
         s_is_wifi_connected = true;
     }
 
-    /* Cleanup: unregister handlers, delete event group */
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(
         IP_EVENT, IP_EVENT_STA_GOT_IP, handler_got_ip));
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(
@@ -184,16 +178,65 @@ void wifi_init_sta(void)
 }
 
 // ============================================================================
+// Query handler  —  called when a remote node sends GET on our key expr
+// ============================================================================
+// Receives a "loaned" (borrowed) query reference.  We read the query's
+// key expression and optional payload, print them for logging, then send
+// a reply with our pre-defined VALUE.
+void query_handler(z_loaned_query_t *query, void *ctx)
+{
+    (void)(ctx);
+
+    /* Print the key expression this query targeted */
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
+
+    /* Print any query parameters (e.g. "?foo=bar") */
+    z_view_string_t params;
+    z_query_parameters(query, &params);
+
+    printf(" >> [Queryable handler] Received Query '%.*s%.*s'\n",
+           (int)z_string_len(z_loan(keystr)),
+           z_string_data(z_loan(keystr)),
+           (int)z_string_len(z_loan(params)),
+           z_string_data(z_loan(params)));
+
+    /* If the query carried a payload, extract and print it */
+    z_owned_string_t payload_string;
+    z_bytes_to_string(z_query_payload(query), &payload_string);
+    if (z_string_len(z_loan(payload_string)) > 0)
+    {
+        printf("     with value '%.*s'\n",
+               (int)z_string_len(z_loan(payload_string)),
+               z_string_data(z_loan(payload_string)));
+    }
+    z_drop(z_move(payload_string));
+
+    /* Build and send the reply */
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
+
+    z_owned_bytes_t reply_payload;
+    z_bytes_from_static_str(&reply_payload, VALUE);
+
+    /*
+     * z_query_reply() sends the response back to the querying node.
+     * It is non-blocking — the reply is queued for the transport layer.
+     */
+    z_query_reply(query, z_loan(ke), z_move(reply_payload), NULL);
+}
+
+// ============================================================================
 //  app_main  —  ESP32 application entry point
 // ============================================================================
-// Flow:  NVS → WiFi → Zenoh session → Declare publisher → Publish forever
+// Flow:  NVS → WiFi → Zenoh session → Declare queryable → Idle
 void app_main()
 {
     // ========================================================================
     // Step 1 — Initialise NVS flash
     // ========================================================================
-    // NVS is ESP-IDF's flash-based key-value store, used internally by
-    // the WiFi and TCP/IP stacks.  Re-initialise on format mismatch.
+    // NVS stores WiFi calibration and DHCP data.  Re-initialise if the
+    // partition format has changed after a firmware upgrade.
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
         ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -218,13 +261,11 @@ void app_main()
     // ========================================================================
     // Step 3 — Build Zenoh configuration
     // ========================================================================
-    // Start from defaults, override mode, optionally set locator.
     z_owned_config_t config;
     z_config_default(&config);
     zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(LOCATOR, "") != 0)
     {
-        /* Non-empty locator: connect (client) or listen (peer) */
         if (strcmp(MODE, "client") == 0)
         {
             zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
@@ -248,65 +289,55 @@ void app_main()
     printf("OK\n");
 
     // ========================================================================
-    // Step 5 — Declare a publisher
+    // Step 5 — Declare Queryable
     // ========================================================================
-    // A "publisher" is a data source in Zenoh — it pushes values on a key
-    // expression.  z_declare_publisher() registers us so that any
-    // subscriber matching "demo/example/zenoh-pico-pub" can receive our data.
-    printf("Declaring publisher for '%s'...", KEYEXPR);
-    z_owned_publisher_t pub;
+    /*
+     * Register our query_handler for the key expression.
+     * After this, any GET query on "demo/example/zenoh-pico-queryable"
+     * from another Zenoh node will trigger a reply.
+     */
+    printf("Declaring Queryable on %s...", KEYEXPR);
+    z_owned_closure_query_t callback;
+    z_closure(&callback, query_handler, NULL, NULL);
+    z_owned_queryable_t qable;
     z_view_keyexpr_t    ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_publisher(z_loan(s), &pub, z_loan(ke), NULL) < 0)
+    if (z_declare_queryable(z_loan(s), &qable, z_loan(ke), z_move(callback),
+                            NULL) < 0)
     {
-        printf("Unable to declare publisher for key expression!\n");
+        printf("Unable to declare queryable.\n");
         exit(-1);
     }
     printf("OK\n");
+    printf("Zenoh setup finished!\n");
 
     // ========================================================================
-    // Step 6 — Publish an incrementing counter every second, forever
+    // Step 6 — Idle loop (wait for queries)
     // ========================================================================
-    /*
-     * Our publish loop:
-     *   - Build a string like "[  42] [ESPIDF]{ESP32} Publication from..."
-     *   - Convert it to a Zenoh payload (z_owned_bytes_t).
-     *   - Call z_publisher_put() to push the value to all subscribers.
-     *
-     * z_publisher_put() is non-blocking — the Zenoh transport layer
-     * handles delivery asynchronously.
-     */
-    char buf[256];
-    for (int idx = 0; 1; ++idx)
+    // The queryable runs asynchronously; we keep the task alive with a
+    // simple infinite sleep.
+    while (1)
     {
         sleep(1);
-        sprintf(buf, "[%4d] %s", idx, VALUE);
-        printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
-
-        /* Build payload from the formatted string */
-        z_owned_bytes_t payload;
-        z_bytes_copy_from_str(&payload, buf);
-
-        /* Push to all subscribers */
-        z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }
 
     // ========================================================================
-    // Step 7 — Cleanup  (unreachable under the infinite for loop)
+    // Step 7 — Cleanup  (unreachable)
     // ========================================================================
     printf("Closing Zenoh Session...");
-    z_drop(z_move(pub));
+    z_drop(z_move(qable));
+
     z_drop(z_move(s));
     printf("OK!\n");
 }
 
 // ============================================================================
-// Fallback — Z_FEATURE_PUBLICATION not enabled
+// Fallback — Z_FEATURE_QUERYABLE not enabled
 // ============================================================================
 #else
 void app_main()
 {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but "
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERYABLE but "
            "this example requires it.\n");
 }
-#endif /* Z_FEATURE_PUBLICATION */
+#endif /* Z_FEATURE_QUERYABLE */

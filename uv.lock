@@ -19,7 +19,7 @@ wheels = [
 ]
 
 [[package]]
-name = "esp32-zenoh-subscriber"
+name = "esp32-zenoh-example"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

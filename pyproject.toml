@@ -1,5 +1,5 @@
 [project]
-name = "esp32-zenoh-subscriber"
+name = "esp32-zenoh-example"
 version = "0.1.0"
 description = "PC-side Python scripts for ESP32 development"
 requires-python = ">=3.8"
