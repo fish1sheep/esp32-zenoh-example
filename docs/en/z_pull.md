@@ -410,14 +410,21 @@ Pulling data every 5000 ms... Ring size: 3
 
 ## Testing with a Publisher
 
-### Using the Zenoh CLI
+### Using the Python Batch Publisher (Recommended)
+
+Install zenoh-python and run `z_pull.py` from this project:
 
 ```bash
-# Send a single publication
-zenoh pub -k "demo/example/test" -v "Hello ESP32 pull!"
+pip install zenoh
 
-# Publish every second
-for i in {1..10}; do zenoh pub -k "demo/example/test" -v "Message $i"; sleep 1; done
+# Send a burst of 5 messages, 1 second apart
+uv run python3 scripts/z_pull.py
+
+# Custom burst: 10 messages, 0.5 seconds apart
+uv run python3 scripts/z_pull.py -n 10 -d 0.5 "Batch test"
+
+# Peer mode
+uv run python3 scripts/z_pull.py --mode peer
 ```
 
 Expected ESP32 output after the next poll cycle:
@@ -444,11 +451,11 @@ Note: with `SIZE = 3`, if more than 3 publications arrive before the next poll, 
 
 ### High-Rate Test
 
-If you publish faster than the pull rate:
+To test ring buffer overflow, publish faster than the pull rate:
 
 ```bash
-# 10 publications per second
-for i in {1..100}; do zenoh pub -k "demo/example/test" -v "Data $i"; usleep 100000; done
+# 50 messages at 0.1 second intervals — ring will overflow (capacity 3)
+uv run python3 scripts/z_pull.py -n 50 -d 0.1 "Fast data"
 ```
 
 The ring holds only the **latest 3** — you'll miss the older ones. Increase `SIZE` if you need a larger buffer.

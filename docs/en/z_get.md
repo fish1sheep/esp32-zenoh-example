@@ -510,21 +510,13 @@ Press `Ctrl+]` to exit the monitor.
 
 ## Testing with GET Queries
 
-### Using the Zenoh CLI
+### Using Another ESP32 (z_queryable.c)
 
-On a PC on the same network, send a query:
+Flash `z_queryable.c` to another ESP32-S3 on the same network. When `z_get.c`
+sends a query to `demo/example/zenoh-pico-queryable`, the queryable ESP32
+responds and you'll see the reply on the serial console.
 
-```bash
-zenoh get -k "demo/example/zenoh-pico-queryable"
-```
-
-Expected ESP32 output:
-
-```
- >> [Queryable handler] Received Query 'demo/example/zenoh-pico-queryable'
-```
-
-Expected PC output:
+ESP32 (z_get.c) output:
 
 ```
 >> Received ('demo/example/zenoh-pico-queryable': '[ESPIDF]{ESP32} Queryable from Zenoh-Pico!')
@@ -532,8 +524,10 @@ Expected PC output:
 
 ### Query with a Payload
 
+Edit `z_get.c` to send a payload string, or use `z_get.py` against the queryable ESP32:
+
 ```bash
-zenoh get -k "demo/example/zenoh-pico-queryable" -v "ping"
+uv run python3 scripts/z_get.py "ping"
 ```
 
 ESP32 output:
@@ -541,12 +535,6 @@ ESP32 output:
 ```
  >> [Queryable handler] Received Query 'demo/example/zenoh-pico-queryable'
      with value 'ping'
-```
-
-### Query with Parameters
-
-```bash
-zenoh get -k "demo/example/zenoh-pico-queryable?format=json&limit=10"
 ```
 
 ---

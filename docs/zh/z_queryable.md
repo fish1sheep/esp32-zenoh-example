@@ -364,11 +364,21 @@ Zenoh setup finished!
 
 ## 测试方法
 
-### 使用 Zenoh CLI
+### 使用 Python 查询器（推荐）
+
+安装 zenoh-python 并运行本项目中的 `z_get.py`：
 
 ```bash
-# 在同一网络的 PC 上发送查询
-zenoh get -k "demo/example/zenoh-pico-queryable"
+pip install zenoh
+
+# 查询默认 key expression
+uv run python3 scripts/z_get.py
+
+# 携带负载查询
+uv run python3 scripts/z_get.py "Hello ESP32!"
+
+# Peer 模式，自定义超时
+uv run python3 scripts/z_get.py --mode peer --timeout 5.0
 ```
 
 ESP32 输出：
@@ -376,21 +386,9 @@ ESP32 输出：
  >> [Queryable handler] Received Query 'demo/example/zenoh-pico-queryable'
 ```
 
-CLI 输出：
+PC 输出：
 ```
 >> Received ('demo/example/zenoh-pico-queryable': '[ESPIDF]{ESP32} Queryable from Zenoh-Pico!')
-```
-
-### 携带选项的查询
-
-```bash
-# 发送带负载的查询
-zenoh get -k "demo/example/zenoh-pico-queryable" -v "hello"
-
-# ESP32: "Received Query 'demo/example/zenoh-pico-queryable' with value 'hello'"
-
-# 带参数的查询
-zenoh get -k "demo/example/zenoh-pico-queryable?format=json"
 ```
 
 ---

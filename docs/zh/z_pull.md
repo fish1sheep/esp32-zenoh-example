@@ -398,14 +398,21 @@ Pulling data every 5000 ms... Ring size: 3
 
 ## 测试方法
 
-### 使用 Zenoh CLI
+### 使用 Python 批量发布器（推荐）
+
+安装 zenoh-python 并运行本项目中的 `z_pull.py`：
 
 ```bash
-# 发送单条消息
-zenoh pub -k "demo/example/test" -v "Hello ESP32 pull!"
+pip install zenoh
 
-# 每秒发布一条
-for i in {1..10}; do zenoh pub -k "demo/example/test" -v "Message $i"; sleep 1; done
+# 发送 5 条消息，间隔 1 秒
+uv run python3 scripts/z_pull.py
+
+# 自定义：10 条消息，间隔 0.5 秒
+uv run python3 scripts/z_pull.py -n 10 -d 0.5 "批量测试"
+
+# Peer 模式
+uv run python3 scripts/z_pull.py --mode peer
 ```
 
 ESP32 在下个轮询周期输出：
@@ -427,13 +434,14 @@ ESP32 在下个轮询周期输出：
 
 ### 高速发布测试
 
-如果发布速度快于拉取速度，环形只保留最新的 3 个：
+测试环形缓冲区溢出，发布速度超过拉取速度：
 
 ```bash
-for i in {1..100}; do zenoh pub -k "demo/example/test" -v "Data $i"; usleep 100000; done
+# 50 条消息，间隔 0.1 秒 — 环形会溢出（容量 3）
+uv run python3 scripts/z_pull.py -n 50 -d 0.1 "快速数据"
 ```
 
-增大 `SIZE` 可容纳更大缓冲区。
+环形只保留最新的 **3 条** — 旧消息会被丢弃。增大 `SIZE` 可容纳更大缓冲区。
 
 ---
 

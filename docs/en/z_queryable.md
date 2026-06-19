@@ -359,11 +359,21 @@ Zenoh setup finished!
 
 ## Testing with GET Queries
 
-### Using the Zenoh CLI
+### Using the Python Querier (Recommended)
+
+Install zenoh-python and run `z_get.py` from this project:
 
 ```bash
-# On a PC on the same network
-zenoh get -k "demo/example/zenoh-pico-queryable"
+pip install zenoh
+
+# Query the default key expression
+uv run python3 scripts/z_get.py
+
+# Query with a payload
+uv run python3 scripts/z_get.py "Hello ESP32!"
+
+# Peer mode with custom timeout
+uv run python3 scripts/z_get.py --mode peer --timeout 5.0
 ```
 
 ESP32 output:
@@ -371,21 +381,9 @@ ESP32 output:
  >> [Queryable handler] Received Query 'demo/example/zenoh-pico-queryable'
 ```
 
-CLI output:
+PC output:
 ```
 >> Received ('demo/example/zenoh-pico-queryable': '[ESPIDF]{ESP32} Queryable from Zenoh-Pico!')
-```
-
-### Query with Options
-
-```bash
-# Send a query with a payload
-zenoh get -k "demo/example/zenoh-pico-queryable" -v "hello"
-
-# ESP32: "Received Query 'demo/example/zenoh-pico-queryable' with value 'hello'"
-
-# Query with parameters
-zenoh get -k "demo/example/zenoh-pico-queryable?format=json"
 ```
 
 ---

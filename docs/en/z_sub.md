@@ -739,13 +739,6 @@ When a message is published, the ESP32's serial output shows:
  >> [Subscriber handler] Received ('demo/example/zenoh-pico-pub': 'Hello ESP32!')
 ```
 
-### Using the zenoh CLI
-
-```bash
-# Install the Zenoh CLI
-zenoh pub -k "demo/example/test" -v "Hello from CLI!"
-```
-
 ### Using Another ESP32 (z_pub.c)
 
 Flash `z_pub.c` to another ESP32-S3 on the same network. It publishes `[N] [ESPIDF]{ESP32} Publication from Zenoh-Pico!` every second — the subscriber will print each one.

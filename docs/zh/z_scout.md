@@ -484,24 +484,13 @@ Did not find any zenoh process.
 
 ## 测试方法
 
-### 启动 Zenoh 路由器（同一网络）
-
-```bash
-# 在连接到同一 WiFi 的 PC 上运行
-zenohd
-```
-
-Scout 将发现此路由器并打印其 Hello 消息。
-
-### 启动 Zenoh 对等端
-
-```bash
-zenohd --mode peer --listen udp/224.0.0.225:7447
-```
-
-### 运行其他 ESP32 示例
+### 运行其他 ESP32 示例（推荐）
 
 在同一网络上运行另一块 ESP32-S3 的 `z_pub.c` 或 `z_sub.c`（如果它们处于 peer 模式或使用 scout 查找路由器），它们也会被 Scout 发现。
+
+### 运行 Zenoh 路由器或对等端
+
+如需更完整的测试，可在同一 WiFi 的 PC 上启动 Zenoh 路由器或对等端。Scout 将发现这些节点并打印其 Hello 消息。
 
 ---
 

@@ -437,14 +437,9 @@ Putting Data ('demo/example/zenoh-pico-pub': '[   2] [ESPIDF]{ESP32} Publication
 
 ## 接收消息（订阅端）
 
-在同一网络中的 PC 或另一块 ESP32 上运行订阅者，即可看到发布的消息：
+要接收此示例发布的消息，将 `z_sub.c` 烧录到同一网络中的另一块 ESP32-S3 上 — 它会订阅 `demo/example/**` 并打印此发布者发送的每条消息。
 
-```bash
-# 使用 zenoh CLI 订阅
-zenoh sub -k "demo/example/zenoh-pico-pub"
-```
-
-如果使用另一个 ESP32 运行订阅者程序，确保使用相同的 `KEYEXPR` 和相同的 Zenoh 网络模式。
+或者在同一网络的 PC 上运行任意 Zenoh 订阅者。
 
 ---
 

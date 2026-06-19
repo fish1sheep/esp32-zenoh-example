@@ -520,24 +520,13 @@ Press `Ctrl+]` to exit the monitor.
 
 ## Testing with Zenoh Nodes
 
-### Start a Zenoh Router (on the same network)
-
-```bash
-# On a PC connected to the same WiFi
-zenohd
-```
-
-The scout should discover this router and print its Hello message.
-
-### Start a Zenoh Peer
-
-```bash
-zenohd --mode peer --listen udp/224.0.0.225:7447
-```
-
-### Run Another ESP32 Example
+### Run Another ESP32 Example (Recommended)
 
 Running `z_pub.c` or `z_sub.c` on another ESP32-S3 on the same network will make it discoverable via scouting (if they're in peer mode or using scouting to find a router).
+
+### Run a Zenoh Router or Peer
+
+For a more complete test, start a Zenoh router or peer on a PC connected to the same WiFi. The scout will discover these nodes and print their Hello messages.
 
 ---
 

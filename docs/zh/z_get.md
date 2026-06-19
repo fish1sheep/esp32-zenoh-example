@@ -45,7 +45,7 @@
       │                                         │  3. 调用 z_query_reply()
       │  ←──────────────────────────────────────│
       │  回复: [ESPIDF]{ESP32} Queryable...     │
-      ▼                                        ▼
+      ▼                                         ▼
 ```
 
 ---
@@ -452,40 +452,29 @@ Zenoh setup finished!
 
 ## 测试方法
 
-### 使用 Zenoh CLI
+### 使用另一块 ESP32（z_queryable.c）
 
-在相同网络的 PC 上发送查询：
+将 `z_queryable.c` 烧录到同一网络中的另一块 ESP32-S3 上。当 `z_get.c` 向 `demo/example/zenoh-pico-queryable` 发送查询时，queryable ESP32 会响应，你将在串口控制台看到回复。
 
-```bash
-zenoh get -k "demo/example/zenoh-pico-queryable"
-```
+ESP32 (z_get.c) 输出：
 
-ESP32 输出：
-```
- >> [Queryable handler] Received Query 'demo/example/zenoh-pico-queryable'
-```
-
-CLI 输出：
 ```
 >> Received ('demo/example/zenoh-pico-queryable': '[ESPIDF]{ESP32} Queryable from Zenoh-Pico!')
 ```
 
 ### 携带负载的查询
 
+编辑 `z_get.c` 发送负载字符串，或使用 `z_get.py` 向 queryable ESP32 查询：
+
 ```bash
-zenoh get -k "demo/example/zenoh-pico-queryable" -v "hello"
+uv run python3 scripts/z_get.py "ping"
 ```
 
 ESP32 输出：
+
 ```
  >> [Queryable handler] Received Query 'demo/example/zenoh-pico-queryable'
-     with value 'hello'
-```
-
-### 带参数的查询
-
-```bash
-zenoh get -k "demo/example/zenoh-pico-queryable?format=json&limit=10"
+     with value 'ping'
 ```
 
 ---

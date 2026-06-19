@@ -434,14 +434,9 @@ Press `Ctrl+]` to exit the monitor.
 
 ## Receiving Messages (Subscriber Side)
 
-Run a subscriber on a PC or another ESP32 on the same network:
+To receive messages published by this example, flash `z_sub.c` to another ESP32-S3 on the same network — it subscribes to `demo/example/**` and prints every message this publisher sends.
 
-```bash
-# Using the zenoh CLI
-zenoh sub -k "demo/example/zenoh-pico-pub"
-```
-
-If using another ESP32 running a subscriber program, ensure it uses the same `KEYEXPR` and the same Zenoh network mode.
+Alternatively, run any Zenoh subscriber on a PC connected to the same network.
 
 ---
 

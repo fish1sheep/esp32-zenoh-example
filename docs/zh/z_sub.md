@@ -679,39 +679,25 @@ idf.py build
 
 ## 典型用法示例
 
-### 场景 1：ESP32 接收 PC 发布的消息（Client 模式）
+### 场景 1：ESP32 订阅 + Python 发布（推荐）
+
+使用本项目中的 `scripts/z_pub.py`：
 
 ```bash
-# 终端 1：启动路由器
-zenohd
+pip install zenoh
 
-# 终端 2：PC 发布者（使用 zenoh 命令行）
-zenoh pub -k "demo/example/hello" -v "Hello from PC!"
+# ESP32 上电（自动连接 WiFi + Zenoh）
+
+# PC 上运行 Python 发布者
+uv run python3 scripts/z_pub.py "Hello from Python!"
 
 # ESP32 串口输出：
-# >> [Subscriber handler] Received ('demo/example/hello': 'Hello from PC!')
+# >> [Subscriber handler] Received ('demo/example/zenoh-pico-pub': 'Hello from Python!')
 ```
 
 ### 场景 2：两个 ESP32 互发（Peer 模式）
 
 将两块 ESP32 的 `CLIENT_OR_PEER` 都设为 1，确保网卡名称匹配。一块运行 `z_pub.c`，另一块运行 `z_sub.c`，它们直接通过 UDP 多播通信，无需路由器。
-
-### 场景 3：ESP32 订阅 + Python 发布
-
-使用之前编写的 `scripts/z_pub.py`：
-
-```bash
-# 启动路由器（Client 模式）
-zenohd
-
-# ESP32 上电（自动连接 WiFi + Zenoh）
-
-# PC 上运行 Python 发布者
-python scripts/z_pub.py "Hello from Python!"
-
-# ESP32 串口输出：
-# >> [Subscriber handler] Received ('demo/example/zenoh-pico-pub': 'Hello from Python!')
-```
 
 ---
 
