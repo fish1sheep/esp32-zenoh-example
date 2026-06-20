@@ -1,4 +1,4 @@
-# z_pull.md — ESP32-S3 Zenoh 拉取式订阅者（环形通道）教程
+# z_pull.md — ESP32 (S3 / C5) Zenoh 拉取式订阅者（环形通道）教程
 
 [← 返回 docs](../README.md)
 
@@ -6,7 +6,7 @@
 
 ## 概述
 
-`main/z_pull.c` 是一个面向 **ESP32-S3** 的 Zenoh **拉取式订阅者（Pull Subscriber）** 示例程序，运行于 **ESP-IDF v6.0** 框架之上。它演示了如何使用**环形通道（Ring Channel）**——一个有界 FIFO 缓冲区——让应用程序按自己的节奏接收发布数据，而非通过即时回调。
+`main/z_pull.c` 是一个面向 **ESP32 (S3 / C5)** 的 Zenoh **拉取式订阅者（Pull Subscriber）** 示例程序，运行于 **ESP-IDF v6.0** 框架之上。它演示了如何使用**环形通道（Ring Channel）**——一个有界 FIFO 缓冲区——让应用程序按自己的节奏接收发布数据，而非通过即时回调。
 
 ### 拉取 vs. 回调订阅者
 
@@ -58,7 +58,7 @@ Zenoh 支持两种订阅者模型：
 ### 数据流
 
 ```
-[对等端或路由器]              [ESP32-S3 拉取订阅者]
+[对等端或路由器]              [ESP32 (S3 / C5) 拉取订阅者]
       │                               │
       │  pub "demo/example/foo"       │
       │ ─────────────────────────────→│
@@ -83,7 +83,7 @@ Zenoh 支持两种订阅者模型：
 
 ### 硬件
 
-- ESP32-S3 开发板
+- ESP32 开发板（ESP32-S3-DevKitC-1 或 ESP32-C5-DevKitC）
 - USB-C 数据线
 
 ### 软件
@@ -423,7 +423,7 @@ ESP32 在下个轮询周期输出：
 
 ### 使用另一块 ESP32（z_pub.c）
 
-烧录 `z_pub.c` 到另一块 ESP32-S3。它每秒发布一次。拉取订阅者每 5 秒窗口收集最多 3 个样本：
+烧录 `z_pub.c` 到另一块 ESP32 (S3 / C5)。它每秒发布一次。拉取订阅者每 5 秒窗口收集最多 3 个样本：
 
 ```
 >> [Subscriber] Pulled ('demo/example/zenoh-pico-pub': '[   0] [ESPIDF]{ESP32} Publication...')

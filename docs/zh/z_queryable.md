@@ -1,4 +1,4 @@
-# z_queryable.md — ESP32-S3 Zenoh 可查询节点（请求-响应）教程
+# z_queryable.md — ESP32 (S3 / C5) Zenoh 可查询节点（请求-响应）教程
 
 [← 返回 docs](../README.md)
 
@@ -6,7 +6,7 @@
 
 ## 概述
 
-`main/z_queryable.c` 是一个面向 **ESP32-S3** 的 Zenoh **可查询节点（Queryable）** 示例程序，运行于 **ESP-IDF v6.0** 框架之上。与 `z_get.c` 类似，它演示了 Zenoh 请求-响应模式的服务器端——ESP32 在一个主题上声明 Queryable，当其他节点发送 GET 查询时做出回复。
+`main/z_queryable.c` 是一个面向 **ESP32 (S3 / C5)** 的 Zenoh **可查询节点（Queryable）** 示例程序，运行于 **ESP-IDF v6.0** 框架之上。与 `z_get.c` 类似，它演示了 Zenoh 请求-响应模式的服务器端——ESP32 在一个主题上声明 Queryable，当其他节点发送 GET 查询时做出回复。
 
 ### 什么是 Queryable？
 
@@ -48,7 +48,7 @@ Queryable:  query_handler() 触发
 
 ### 硬件
 
-- ESP32-S3 开发板（如 ESP32-S3-DevKitC-1）
+- ESP32 开发板（ESP32-S3-DevKitC-1 或 ESP32-C5-DevKitC）
 - USB-C 数据线
 
 ### 软件

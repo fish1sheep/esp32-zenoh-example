@@ -1,10 +1,10 @@
-# z_sub.md — ESP32-S3 Zenoh 订阅者教程
+# z_sub.md — ESP32 (S3 / C5) Zenoh 订阅者教程
 
 [← 返回 docs](../README.md) | [English Version](../en/z_sub.md)
 
 ## 概述
 
-`z_sub.c` 是一个面向 **ESP32-S3** 的 Zenoh 订阅者（Subscriber）示例程序，运行于 **ESP-IDF v6.0** 框架之上。它演示了嵌入式设备如何通过 WiFi 加入 Zenoh 网络，订阅指定主题并接收消息。
+`z_sub.c` 是一个面向 **ESP32 (S3 / C5)** 的 Zenoh 订阅者（Subscriber）示例程序，运行于 **ESP-IDF v6.0** 框架之上。它演示了嵌入式设备如何通过 WiFi 加入 Zenoh 网络，订阅指定主题并接收消息。
 
 ### 核心功能
 
@@ -18,7 +18,7 @@
 ### 数据流
 
 ```
-[某发布者] --发布→ [Zenoh 网络] ---- TCP/UDP ---→ [ESP32-S3]
+[某发布者] --发布→ [Zenoh 网络] ---- TCP/UDP ---→ [ESP32 (S3 / C5)]
                                                       │
                                                 data_handler()
                                                       │
@@ -32,7 +32,7 @@
 
 ### 硬件
 
-- ESP32-S3 开发板（如 ESP32-S3-DevKitC-1）
+- ESP32 开发板（ESP32-S3-DevKitC-1 或 ESP32-C5-DevKitC）
 - USB-C 数据线（用于供电和串口）
 
 ### 软件
@@ -523,7 +523,7 @@ if (strcmp(LOCATOR, "") != 0) {
 | 场景 | LOCATOR | 效果 |
 |------|---------|------|
 | Client + 空 LOCATOR | `""` | Zenoh 通过 UDP 多播发送 scouting 查询，自动发现网络中的路由器 |
-| Client + 指定地址 | `"tcp/192.168.1.26:7447"` | 直接连接指定端点，更可靠（无多播依赖） |
+| Client + 指定地址 | `"tcp/<ROUTER_IP>:7447"` | 直接连接指定端点，更可靠（无多播依赖） |
 | Peer | `"udp/224.0.0.225:7447#iface=en0"` | 监听多播地址，与其他 peer 直连 |
 
 > 🧠 **`z_loan_mut` 的作用**：Zenoh 的类型系统区分"拥有"和"借用"。`z_owned_config_t` 是拥有类型，要修改它需要先借出可变引用——`z_loan_mut(config)` 就是这个用途。在传统 C 中它等价于 `&config`，但显式的 API 让所有权关系一目了然。
@@ -873,7 +873,7 @@ void data_handler(z_loaned_sample_t *sample, void *arg) {
 
 WiFi 连接卡住了——最可能是 SSID/密码错误。可尝试：
 
-1. 确认热点是 2.4 GHz（ESP32-S3 不支持 5 GHz）
+1. 确认热点是 2.4 GHz（ESP32-S3 不支持 5 GHz；ESP32-C5 支持 5 GHz 但本例配置为 2.4 GHz）
 2. 检查密码和加密方式（推荐 WPA2-PSK）
 3. 增大 `ESP_MAXIMUM_RETRY` 或添加串口调试打印
 

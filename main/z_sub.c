@@ -179,20 +179,18 @@ void wifi_init_sta(void)
     vEventGroupDelete(s_event_group_handler);
 }
 
-/*
- * Zenoh subscriber callback
- * --------------------------
- * Whenever someone publishes on a key matching "demo/example/**", Zenoh
- * calls this function with a "loaned sample" — a borrowed view into the
- * received data that we must NOT free.
- *
- * Our job:
- *   1. Extract the key expression string (for printing).
- *   2. Extract the payload bytes as a C string.
- *   3. Print both to the serial console.
- *   4. Drop the owned string we created (NOT the sample itself — Zenoh
- *      manages that lifecycle).
- */
+// Zenoh subscriber callback
+// --------------------------
+// Whenever someone publishes on a key matching "demo/example/**", Zenoh
+// calls this function with a "loaned sample" — a borrowed view into the
+// received data that we must NOT free.
+//
+// Our job:
+//   1. Extract the key expression string (for printing).
+//   2. Extract the payload bytes as a C string.
+//   3. Print both to the serial console.
+//   4. Drop the owned string we created (NOT the sample itself — Zenoh
+//      manages that lifecycle).
 void data_handler(z_loaned_sample_t *sample, void *arg)
 {
     /*
@@ -326,22 +324,22 @@ void app_main()
     }
     printf("OK\n");
 
-    /* =============================================================
-     * Step 5 — Declare subscriber
-     *
-     * A "subscriber" is Zenoh's term for a persistent subscription.
-     * We provide:
-     *   - the session handle  (z_loan(s))
-     *   - the key expression  ("demo/example/**")
-     *   - a closure (callback + optional context + drop function)
-     *
-     * The "**" wildcard matches any number of path segments, so
-     * publishing on "demo/example/foo", "demo/example/bar/baz", etc.
-     * will all trigger our callback.
-     *
-     * The closure is "moved" (z_move(callback)) — after this call the
-     * subscriber owns it and we must not use it again.
-     * ============================================================= */
+    // =============================================================
+    // Step 5 — Declare subscriber
+    //
+    // A "subscriber" is Zenoh's term for a persistent subscription.
+    // We provide:
+    //   - the session handle  (z_loan(s))
+    //   - the key expression  ("demo/example/**")
+    //   - a closure (callback + optional context + drop function)
+    //
+    // The "**" wildcard matches any number of path segments, so
+    // publishing on "demo/example/foo", "demo/example/bar/baz", etc.
+    // will all trigger our callback.
+    //
+    // The closure is "moved" (z_move(callback)) — after this call the
+    // subscriber owns it and we must not use it again.
+    // =============================================================
     printf("Declaring Subscriber on '%s'...", KEYEXPR);
     z_owned_closure_sample_t callback;
     z_closure(&callback, data_handler, NULL, NULL);

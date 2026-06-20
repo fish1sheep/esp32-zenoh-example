@@ -9,7 +9,9 @@
 git clone https://github.com/fish1sheep/esp32-zenoh-example.git --recurse-submodules
 ```
 
-A walkthrough of the official [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) ESP-IDF example, with PC-side test scripts for learning how ESP32 series MCUs communicate with a PC via the Zenoh protocol.
+A walkthrough of the official [zenoh-pico](https://github.com/eclipse-zenoh/zenoh-pico) ESP-IDF example,
+with PC-side test scripts for learning how **ESP32-S3** and **ESP32-C5** series MCUs communicate
+with a PC via the Zenoh protocol.
 
 ## License
 

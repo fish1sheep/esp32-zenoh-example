@@ -1,4 +1,4 @@
-# z_queryable.md — ESP32-S3 Zenoh Queryable (Request-Response) Tutorial
+# z_queryable.md — ESP32 (S3 / C5) Zenoh Queryable (Request-Response) Tutorial
 
 [← Back to docs](../README.md)
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-`main/z_queryable.c` is a Zenoh **queryable** example for the **ESP32-S3**, built on **ESP-IDF v6.0**. Like `z_get.c`, it demonstrates the server side of Zenoh's request-response pattern — the ESP32 declares a queryable on a key expression and replies when other nodes send GET queries.
+`main/z_queryable.c` is a Zenoh **queryable** example for the **ESP32 (S3 / C5)**, built on **ESP-IDF v6.0**. Like `z_get.c`, it demonstrates the server side of Zenoh's request-response pattern — the ESP32 declares a queryable on a key expression and replies when other nodes send GET queries.
 
 ### What is a Queryable?
 
@@ -48,7 +48,7 @@ Unlike a subscriber (receives pushed data), a queryable **waits to be asked**.
 
 ### Hardware
 
-- ESP32-S3 development board (e.g., ESP32-S3-DevKitC-1)
+- ESP32 development board (ESP32-S3-DevKitC-1 or ESP32-C5-DevKitC)
 - USB-C cable (power and serial)
 
 ### Software

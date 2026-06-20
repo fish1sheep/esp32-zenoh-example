@@ -1,8 +1,8 @@
-# z_pub.c — ESP32-S3 Zenoh Publisher Tutorial
+# z_pub.c — ESP32 (S3 / C5) Zenoh Publisher Tutorial
 
 ## Overview
 
-`z_pub.c` is a Zenoh publisher example for the **ESP32-S3**, built on **ESP-IDF v6.0**. It demonstrates how an embedded device joins a Zenoh network over WiFi and publishes messages at a fixed interval.
+`z_pub.c` is a Zenoh publisher example for the **ESP32 (S3 / C5)**, built on **ESP-IDF v6.0**. It demonstrates how an embedded device joins a Zenoh network over WiFi and publishes messages at a fixed interval.
 
 ### Key Features
 
@@ -16,7 +16,7 @@
 ### Data Flow
 
 ```
-[ESP32-S3] --- WiFi STA ---> [WiFi AP] ----> [Zenoh Network] ---> (Subscribers receive)
+[ESP32 (S3 / C5)] --- WiFi STA ---> [WiFi AP] ----> [Zenoh Network] ---> (Subscribers receive)
     │                                   │
     │ every 1 second                    │
     │ publishes "[N] [ESPIDF]{ESP32} "  │
@@ -29,7 +29,7 @@
 
 ### Hardware
 
-- ESP32-S3 development board (e.g., ESP32-S3-DevKitC-1)
+- ESP32 development board (ESP32-S3-DevKitC-1 or ESP32-C5-DevKitC)
 - USB-C cable (power and serial)
 
 ### Software
@@ -434,7 +434,7 @@ Press `Ctrl+]` to exit the monitor.
 
 ## Receiving Messages (Subscriber Side)
 
-To receive messages published by this example, flash `z_sub.c` to another ESP32-S3 on the same network — it subscribes to `demo/example/**` and prints every message this publisher sends.
+To receive messages published by this example, flash `z_sub.c` to another ESP32 (S3 / C5) on the same network — it subscribes to `demo/example/**` and prints every message this publisher sends.
 
 Alternatively, run any Zenoh subscriber on a PC connected to the same network.
 

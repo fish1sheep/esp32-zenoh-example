@@ -1,8 +1,8 @@
-# z_pub.c — ESP32-S3 Zenoh 发布者教程
+# z_pub.c — ESP32 (S3 / C5) Zenoh 发布者教程
 
 ## 概述
 
-`z_pub.c` 是一个面向 **ESP32-S3** 的 Zenoh 发布者（Publisher）示例程序，运行于 **ESP-IDF v6.0** 框架之上。它演示了嵌入式设备通过 WiFi 加入 Zenoh 网络，并以固定频率发布消息的完整流程。
+`z_pub.c` 是一个面向 **ESP32 (S3 / C5)** 的 Zenoh 发布者（Publisher）示例程序，运行于 **ESP-IDF v6.0** 框架之上。它演示了嵌入式设备通过 WiFi 加入 Zenoh 网络，并以固定频率发布消息的完整流程。
 
 ### 核心功能
 
@@ -16,7 +16,7 @@
 ### 数据流
 
 ```
-[ESP32-S3] --- WiFi STA ---> [WiFi AP] ----> [Zenoh 网络] ---> (订阅者收消息)
+[ESP32 (S3 / C5)] --- WiFi STA ---> [WiFi AP] ----> [Zenoh 网络] ---> (订阅者收消息)
     │                                   │
     │ 每 1 秒                           │
     │ 发布 "[N] [ESPIDF]{ESP32} ..."    │
@@ -29,7 +29,7 @@
 
 ### 硬件
 
-- ESP32-S3 开发板（如 ESP32-S3-DevKitC-1）
+- ESP32 开发板（ESP32-S3-DevKitC-1 或 ESP32-C5-DevKitC）
 - USB-C 数据线（用于供电和串口）
 
 ### 软件
@@ -437,7 +437,7 @@ Putting Data ('demo/example/zenoh-pico-pub': '[   2] [ESPIDF]{ESP32} Publication
 
 ## 接收消息（订阅端）
 
-要接收此示例发布的消息，将 `z_sub.c` 烧录到同一网络中的另一块 ESP32-S3 上 — 它会订阅 `demo/example/**` 并打印此发布者发送的每条消息。
+要接收此示例发布的消息，将 `z_sub.c` 烧录到同一网络中的另一块 ESP32 (S3 / C5) 上 — 它会订阅 `demo/example/**` 并打印此发布者发送的每条消息。
 
 或者在同一网络的 PC 上运行任意 Zenoh 订阅者。
 

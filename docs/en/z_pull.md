@@ -1,4 +1,4 @@
-# z_pull.md — ESP32-S3 Zenoh Pull Subscriber (Ring Channel) Tutorial
+# z_pull.md — ESP32 (S3 / C5) Zenoh Pull Subscriber (Ring Channel) Tutorial
 
 [← Back to docs](../README.md)
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-`main/z_pull.c` is a Zenoh **pull-based subscriber** example for the **ESP32-S3**, built on **ESP-IDF v6.0**. It demonstrates how to use a **ring channel** — a bounded FIFO buffer — to receive publications at the application's own pace rather than via an immediate callback.
+`main/z_pull.c` is a Zenoh **pull-based subscriber** example for the **ESP32 (S3 / C5)**, built on **ESP-IDF v6.0**. It demonstrates how to use a **ring channel** — a bounded FIFO buffer — to receive publications at the application's own pace rather than via an immediate callback.
 
 ### Pull vs. Callback Subscriber
 
@@ -58,7 +58,7 @@ The ring channel is created as a **pair**:
 ### Data Flow
 
 ```
-[Peer or Router]             [ESP32-S3 Pull Subscriber]
+[Peer or Router]             [ESP32 (S3 / C5) Pull Subscriber]
       │                               │
       │  pub "demo/example/foo"       │
       │ ─────────────────────────────→│
@@ -83,7 +83,7 @@ The ring channel is created as a **pair**:
 
 ### Hardware
 
-- ESP32-S3 development board (e.g., ESP32-S3-DevKitC-1)
+- ESP32 development board (ESP32-S3-DevKitC-1 or ESP32-C5-DevKitC)
 - USB-C cable (power and serial)
 
 ### Software
@@ -436,7 +436,7 @@ Expected ESP32 output after the next poll cycle:
 
 ### Using Another ESP32 (z_pub.c)
 
-Flash `z_pub.c` to another ESP32-S3. It publishes every second. The pull subscriber collects up to 3 samples per 5-second window:
+Flash `z_pub.c` to another ESP32 (S3 / C5). It publishes every second. The pull subscriber collects up to 3 samples per 5-second window:
 
 ```
 >> [Subscriber] Pulled ('demo/example/zenoh-pico-pub': '[   0] [ESPIDF]{ESP32} Publication...')

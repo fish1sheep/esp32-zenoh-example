@@ -1,4 +1,4 @@
-# z_get.md — ESP32-S3 Zenoh 可查询节点（请求-响应）教程
+# z_get.md — ESP32 (S3 / C5) Zenoh GET 客户端教程
 
 [← 返回 docs](../README.md)
 
@@ -6,20 +6,20 @@
 
 ## 概述
 
-`main/z_get.c` 是一个面向 **ESP32-S3** 的 Zenoh **可查询节点（Queryable）** 示例程序。它演示了 Zenoh 请求-响应模式的服务器端——ESP32 在一个主题上声明 Queryable，当其他节点发送 GET 查询时做出回复。
+`main/z_get.c` 是一个面向 **ESP32 (S3 / C5)** 的 Zenoh **GET 客户端** 示例程序，构建在 **ESP-IDF v6.0** 之上。它演示了 Zenoh 请求-响应模式的客户端——ESP32 定期向网络中的 Queryable 发送 GET 查询，并打印收到的回复。
 
-### 什么是 Queryable？
+### 什么是 GET 客户端？
 
-在 Zenoh 中，**Queryable** 类似于 HTTP 服务器端点：
+在 Zenoh 中，**GET 客户端** 类似于 HTTP 客户端发起请求：
 
 ```
-[客户端]  ─── GET "demo/example/zenoh-pico-queryable" ───→  [Queryable (ESP32)]
-               └─ Payload: "query data?"                      │
-                                                              │
-               ←── 回复: "[ESPIDF]{ESP32} Queryable..." ──────┘
+[GET 客户端 (ESP32)]  ─── GET "demo/example/**" ───→  [Queryable (PC)]
+                            └─ (无负载)                  │
+                                                         │
+                ←── 回复: "[Python] Hello from PC!" ─────┘
 ```
 
-与订阅者（接收推送数据）不同，Queryable **等待被询问**。请求节点发送 GET 查询，Queryable 的处理函数运行并产生回复。
+与订阅者（持续接收推送数据）不同，GET 客户端发送一次**查询**并收集**回复**。这是一种拉模型——客户端决定何时询问，Queryable 按需响应。
 
 ### 核心功能
 
@@ -27,25 +27,26 @@
 |------|------|
 | WiFi STA 连接 | 连接指定 SSID，自动重试（最多 5 次） |
 | Zenoh 会话 | 以 Client 或 Peer 模式打开 Zenoh 会话 |
-| Queryable 声明 | 为 `"demo/example/zenoh-pico-queryable"` 注册处理器 |
-| 请求-响应 | 记录传入查询的主题、参数和负载 |
-| 内存安全 | 正确释放在堆上分配的字符串，防止内存泄漏 |
-| 错误处理 | Zenoh 操作失败立即退出并打印清晰信息 |
+| 定期查询 | 每 5 秒向 `"demo/example/**"` 发送 `z_get()` 查询 |
+| 回复处理 | 通过 `reply_handler` 回调打印每条收到的回复 |
+| 完成通知 | `reply_dropper` 在查询所有回复接收完毕后通知 |
+| 错误检测 | `z_reply_is_ok()` 区分成功回复和错误回复 |
+| 内存安全 | 正确释放在堆上分配的字符串 |
 
 ### 数据流
 
 ```
-[Zenoh 客户端]                           [ESP32-S3 Queryable]
-      │                                         │
-      │  GET "demo/example/zenoh-pico-queryable"
-      │  ──────────────────────────────────────→│
-      │                                         │ query_handler() 触发：
-      │                                         │  1. 打印查询详细信息
-      │                                         │  2. 构建回复负载
-      │                                         │  3. 调用 z_query_reply()
-      │  ←──────────────────────────────────────│
-      │  回复: [ESPIDF]{ESP32} Queryable...     │
-      ▼                                         ▼
+[ESP32 (S3 / C5) GET 客户端]               [Queryable (PC / 另一块 ESP32)]
+      │                                             │
+      │  GET "demo/example/**"                      │
+      │  ─────────────────────────────────────────→ │
+      │                                             │ query_handler 触发：
+      │                                             │  1. 构建回复
+      │                                             │  2. 调用 z_query_reply()
+      │  ←───────────────────────────────────────── │
+      │  回复: "[Python] Hello from PC!"            │
+      │                    ...每 5 秒               │
+      ▼                                             ▼
 ```
 
 ---
@@ -54,7 +55,7 @@
 
 ### 硬件
 
-- ESP32-S3 开发板（如 ESP32-S3-DevKitC-1）
+- ESP32 开发板（ESP32-S3-DevKitC-1 或 ESP32-C5-DevKitC）
 - USB-C 数据线
 
 ### 软件
@@ -62,14 +63,15 @@
 | 工具 | 版本 | 用途 |
 |------|------|------|
 | ESP-IDF | v6.0.1 | 嵌入式开发框架 |
-| zenoh-pico | v1.9.0 | Zenoh 协议栈（必须启用 queryable） |
+| zenoh-pico | v1.9.0 | Zenoh 协议栈（必须启用 **query** 功能） |
 | xtensa-esp32s3-elf-gcc | — | 交叉编译工具链 |
-| zenoh（CLI 或 Python） | — | 从 PC 发送测试查询 |
+| Python + zenoh 库 | — | 在 PC 上运行 Queryable 进行测试 |
 
 ### 网络
 
 - 一个 2.4 GHz WiFi 热点（SSID + 密码）
-- 一个 Zenoh 路由器（`zenohd`）**或**对等端在同一网络中（用于路由 GET 查询）
+- 一个 Zenoh 路由器（`zenohd`）或对等端（用于路由查询）
+- 一个注册在匹配 `"demo/example/**"` 主题上的 Queryable 来回复
 
 ---
 
@@ -105,22 +107,27 @@
 
 按 ESP-IDF 包含分类规则分为四组：**ESP-IDF**、**C 标准库**、**第三方库**、**FreeRTOS**。
 
-### 3. 编译时守卫：`#if Z_FEATURE_QUERYABLE == 1`
+### 3. 编译时守卫：`#if Z_FEATURE_QUERY == 1`
 
 ```c
-#if Z_FEATURE_QUERYABLE == 1
+#if Z_FEATURE_QUERY == 1
 // ... 主程序体 ...
 #else
-void app_main() { printf("ERROR: ...\n"); }
+void app_main() { printf("ERROR: Zenoh pico was compiled without "
+                         "Z_FEATURE_QUERY but this example requires it.\n"); }
 #endif
 ```
 
-Queryable 功能可在编译 zenoh-pico 时关闭。**如果遇到构建错误**，请检查：
+**query** 功能与 **queryable** 功能在 zenoh-pico 中是分开的。`Z_FEATURE_QUERY` 开启客户端侧（`z_get()`）。如果遇到构建错误，请检查：
 
 ```bash
 idf.py menuconfig
-→ Component config → Zenoh pico → Enable queryable feature
+→ Component config → Zenoh pico → Enable query feature
 ```
+
+**注意：** `Z_FEATURE_QUERY` 和 `Z_FEATURE_QUERYABLE` 是不同的开关：
+- `Z_FEATURE_QUERY` 开启 `z_get()`（GET 客户端侧）
+- `Z_FEATURE_QUERYABLE` 开启 `z_declare_queryable()`（Queryable 服务端侧）
 
 ### 4. WiFi 配置宏
 
@@ -172,17 +179,19 @@ static int                s_retry_count = 0;
 
 **建议**：从**客户端模式**开始。先在 PC 上运行 `zenohd`，再运行 ESP32。
 
-### 7. 主题和回复值
+### 7. 查询主题和负载配置
 
 ```c
-#define KEYEXPR "demo/example/zenoh-pico-queryable"
-#define VALUE "[ESPIDF]{ESP32} Queryable from Zenoh-Pico!"
+#define KEYEXPR "demo/example/**"
+#define VALUE ""
 ```
 
 | 宏 | 用途 |
 |----|------|
-| `KEYEXPR` | 此 Queryable 应答的主题——匹配此主题的查询会触发处理器 |
-| `VALUE` | 发送回每个查询的静态回复负载 |
+| `KEYEXPR` | `z_get()` 的查询选择器——使用 `**` 通配符匹配 `demo/example/` 下的**任意** Queryable |
+| `VALUE` | 可选的查询负载（当前为空）。设为字符串可在每次 GET 请求中附带数据 |
+
+**为什么用 `**` 通配符？** 使用 `demo/example/**` 意味着查询会匹配该树下所有主题。注册在 `demo/example/zenoh-pico-pub`、`demo/example/reply` 或任何子主题上的 Queryable 都会回复。
 
 ### 8. WiFi 事件回调
 
@@ -370,107 +379,94 @@ printf("OK\n");
 
 `z_open()` 建立传输连接并协商能力。成功后，`config` 已被**移动**（失效）——不要再次使用。
 
-#### 第五步 — 声明 Queryable
 
-```c
-printf("Declaring Queryable on %s...", KEYEXPR);
-z_owned_closure_query_t callback;
-z_closure(&callback, query_handler, NULL, NULL);
-z_owned_queryable_t qable;
-z_view_keyexpr_t ke;
-z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-if (z_declare_queryable(z_loan(s), &qable, z_loan(ke), z_move(callback), NULL) < 0) {
-    printf("Unable to declare queryable.\n");
-    exit(-1);
-}
-```
-
-**闭包构建：**
-```c
-z_closure(&callback, query_handler, NULL, NULL);
-```
-- 参数 1：闭包输出
-- 参数 2：处理函数（每个查询调用）
-- 参数 3：可选的上下文指针（`NULL`）
-- 参数 4：可选的 drop 函数（`NULL`）
-
-**声明后，Queryable 即生效。** 任何针对 `"demo/example/zenoh-pico-queryable"` 的 GET 查询都会触发 `query_handler`。
-
-#### 第六步 — 空闲循环
-
-```c
-while (1) {
-    sleep(1);
-}
-```
-
-Queryable 在后台异步运行。我们只需保持任务存活。
-
-#### 第七步 — 清理（不可达）
-
-```c
-z_drop(z_move(qable));   // 取消声明 Queryable
-z_drop(z_move(s));       // 关闭会话
-```
-
-展示正确的销毁顺序。
 
 ---
 
 ## 编译与烧录
 
-### 1. 配置 WiFi
-
-```c
-#define ESP_WIFI_SSID "你的WiFi名称"
-#define ESP_WIFI_PASS "你的WiFi密码"
-```
-
-### 2. 确认 Queryable 已启用
+### 1. 确认 Query 功能已启用
 
 ```bash
 idf.py menuconfig
-→ Component config → Zenoh pico → Enable queryable feature
+→ Component config → Zenoh pico → Enable query feature
 ```
 
-### 3. 编译、烧录、监视
+**注意：** 这是 `Z_FEATURE_QUERY`（不是 `Z_FEATURE_QUERYABLE`）。
+
+### 2. 编译、烧录、监视
 
 ```bash
 idf.py build flash monitor
 ```
 
-预期输出：
+预期输出（有 Queryable 时）：
 
 ```
 Connecting to WiFi...OK!
 Opening Zenoh Session...OK
-Declaring Queryable on demo/example/zenoh-pico-queryable...OK
-Zenoh setup finished!
+Sending Query 'demo/example/**'...
+ >> Received ('demo/example/reply': '[Python] Hello from PC! ...')
+ >> Received query final notification
+Sending Query 'demo/example/**'...
+ >> Received ('demo/example/reply': '[Python] Hello from PC! ...')
+ >> Received query final notification
 ```
+
+按 `Ctrl+]` 退出监视器。
 
 ---
 
 ## 测试方法
 
-### 使用另一块 ESP32（z_queryable.c）
+### 1. Python Queryable（推荐）
 
-将 `z_queryable.c` 烧录到同一网络中的另一块 ESP32-S3 上。当 `z_get.c` 向 `demo/example/zenoh-pico-queryable` 发送查询时，queryable ESP32 会响应，你将在串口控制台看到回复。
-
-ESP32 (z_get.c) 输出：
-
-```
->> Received ('demo/example/zenoh-pico-queryable': '[ESPIDF]{ESP32} Queryable from Zenoh-Pico!')
-```
-
-### 携带负载的查询
-
-编辑 `z_get.c` 发送负载字符串，或使用 `z_get.py` 向 queryable ESP32 查询：
+先启动 Python Queryable，再上电 ESP32：
 
 ```bash
-uv run python3 scripts/z_get.py "ping"
+# 终端 1 — Python Queryable（先启动）
+python3 scripts/z_queryable.py --connect tcp/<ROUTER_IP>:7447
+
+# 终端 2 — ESP32 监视器
+idf.py monitor
 ```
 
-ESP32 输出：
+ESP32 输出（每 5 秒）：
+
+```
+Sending Query 'demo/example/**'...
+ >> Received ('demo/example/reply': '[Python] Hello from PC! Received your query on ...')
+ >> Received query final notification
+```
+
+Python 侧输出：
+
+```
+[17:09:43] ⇐ Query on 'demo/example/**' (no payload)
+[17:09:43] ⇒ Replied: '[Python] Hello from PC! ...'
+```
+
+如果 ESP32 只显示 `>> Received an error`，说明没有 Queryable 在线——检查 `z_queryable.py` 是否在运行且网络通畅。
+
+### 2. 用另一块 ESP32 做 Queryable
+
+将 `main/z_queryable.c` 烧录到第二块 ESP32。通配符 `"demo/example/**"` 会匹配 Queryable 的 `"demo/example/zenoh-pico-queryable"`：
+
+```
+Sending Query 'demo/example/**'...
+ >> Received ('demo/example/zenoh-pico-queryable': '[ESPIDF]{ESP32} Queryable from Zenoh-Pico!')
+ >> Received query final notification
+```
+
+### 3. 反向测试 — Python GET 客户端测试 ESP32 Queryable
+
+`scripts/z_get.py` 是 Python 端的 GET 客户端，用来测试 ESP32 上的 Queryable（`main/z_queryable.c`）：
+
+```bash
+python3 scripts/z_get.py --connect tcp/<ROUTER_IP>:7447 "ping"
+```
+
+ESP32 串口输出：
 
 ```
  >> [Queryable handler] Received Query 'demo/example/zenoh-pico-queryable'
@@ -481,35 +477,50 @@ ESP32 输出：
 
 ## 自定义指南
 
-### 更改回复值
+### 改间隔
 
 ```c
-#define VALUE "{\"sensor\": \"temperature\", \"value\": 25.3}"
+sleep(1);   // 每 1 秒查询一次
+// 或
+vTaskDelay(pdMS_TO_TICKS(500));  // 使用 FreeRTOS 延时
 ```
 
-### 添加查询路由逻辑
+### 每次查询附带负载
 
 ```c
-void query_handler(z_loaned_query_t *query, void *ctx) {
-    z_view_string_t params;
-    z_query_parameters(query, &params);
-    // 如果参数包含 "format=json"，回复 JSON；否则回复纯文本
+#define VALUE "ping"
+```
+
+现在每次 GET 都会附带 `"ping"` 负载，Queryable 可以检查。
+
+### 请求指定主题（无通配符）
+
+```c
+#define KEYEXPR "demo/example/my-device"
+```
+
+只有注册在此精确主题上的 Queryable 才会响应。
+
+### 统计回复数量
+
+```c
+typedef struct { int count; } reply_ctx_t;
+
+void reply_handler(z_loaned_reply_t *oreply, void *ctx) {
+    reply_ctx_t *c = (reply_ctx_t *)ctx;
+    c->count++;
+    // ...
 }
-```
 
-### 注册多个 Queryable
+void reply_dropper(void *ctx) {
+    reply_ctx_t *c = (reply_ctx_t *)ctx;
+    printf("Query complete — %d replies received.\n", c->count);
+    free(c);
+}
 
-```c
-z_declare_queryable(..., "sensor/temperature", ...);
-z_declare_queryable(..., "sensor/humidity", ...);
-```
-
-### 使用上下文指针
-
-```c
-typedef struct { int counter; } query_ctx_t;
-query_ctx_t *ctx = malloc(sizeof(query_ctx_t));
-z_closure(&callback, query_handler, ctx, free_context);
+reply_ctx_t *ctx = malloc(sizeof(reply_ctx_t));
+ctx->count = 0;
+z_closure(&callback, reply_handler, reply_dropper, ctx);
 ```
 
 ---
@@ -525,19 +536,27 @@ z_closure(&callback, query_handler, ctx, free_context);
 | 防火墙阻止 Zenoh 端口 | 开放 TCP/UDP 7447 |
 | 不同子网 | Scout 发现必须在同一子网中 |
 
-### ❌ `Unable to declare queryable.`
+### ❌ `Unable to send query.`
 
-通常在打开会话后立即发生。检查：
-- 网络连接（ESP32 是否仍连接 WiFi？）
-- Zenoh 路由器是否仍在运行
+通常意味着会话丢失。检查：
+- WiFi 连接（ESP32 日志）
+- `zenohd` 是否仍在运行且可达
 
-### ❌ 发送 GET 后无响应
+### ❌ 只看到 "Received an error" — 没有有效回复
 
-| 可能原因 | 解决方法 |
-|---------|----------|
-| 主题不匹配 | GET 和 Queryable 必须使用相同的 `KEYEXPR` |
-| 会话模式不匹配 | 混合客户端/对等端模式但无路由器桥接 |
-| 路由器未转发 | 检查 `zenohd` 日志——确认两端都已连接 |
+没有 Queryable 注册在匹配 `"demo/example/**"` 的主题上。
+在同一网络的 PC 上启动 `scripts/z_queryable.py`。
+
+### ❌ `Z_FEATURE_QUERY` 在 sdkconfig 中找不到
+
+```bash
+idf.py menuconfig
+→ Component config → Zenoh pico → Enable query feature
+```
+
+**不要与 `Z_FEATURE_QUERYABLE` 混淆**——它们是独立的开关：
+- `Z_FEATURE_QUERY` 开启 `z_get()`（GET 客户端侧）
+- `Z_FEATURE_QUERYABLE` 开启 `z_declare_queryable()`（Queryable 服务端侧）
 
 ---
 
@@ -545,7 +564,7 @@ z_closure(&callback, query_handler, ctx, free_context);
 
 | 资源 | 链接 |
 |------|------|
-| Zenoh Queryable 概念 | https://zenoh.io/docs/manual/abstractions/#queryable |
+| Zenoh GET/Query 概念 | https://zenoh.io/docs/manual/abstractions/#querying |
 | zenoh-pico API | https://zenoh-pico.readthedocs.io/en/1.9.0/ |
 | ESP-IDF WiFi 驱动 | https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/network/esp_wifi.html |
 | FreeRTOS 事件组 | https://www.freertos.org/event-groups.html |

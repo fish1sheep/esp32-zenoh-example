@@ -1,4 +1,4 @@
-# z_scout.md — ESP32-S3 Zenoh Scout (Network Discovery) Tutorial
+# z_scout.md — ESP32 (S3 / C5) Zenoh Scout (Network Discovery) Tutorial
 
 [← Back to docs](../README.md)
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-`main/z_scout.c` is a Zenoh **scout** example for the **ESP32-S3**, built on **ESP-IDF v6.0**. It discovers all Zenoh nodes (routers, peers, clients) on the local network by sending a UDP multicast query and printing the `Hello` replies.
+`main/z_scout.c` is a Zenoh **scout** example for the **ESP32 (S3 / C5)**, built on **ESP-IDF v6.0**. It discovers all Zenoh nodes (routers, peers, clients) on the local network by sending a UDP multicast query and printing the `Hello` replies.
 
 ### What is Scouting?
 
@@ -40,7 +40,7 @@ Zenoh scouting is the equivalent of shouting **"Is anyone using Zenoh on this ne
 ### Data Flow
 
 ```
-[ESP32-S3] --- WiFi STA ---> [WiFi AP]
+[ESP32 (S3 / C5)] --- WiFi STA ---> [WiFi AP]
     │
     │  "Anyone using Zenoh?"  (UDP multicast scout)
     │
@@ -57,7 +57,7 @@ Serial Console prints each Hello with formatted details
 
 ### Hardware
 
-- ESP32-S3 development board (e.g., ESP32-S3-DevKitC-1)
+- ESP32 development board (ESP32-S3-DevKitC-1 or ESP32-C5-DevKitC)
 - USB-C cable (power and serial)
 
 ### Software
@@ -141,7 +141,7 @@ idf.py menuconfig
 
 | Macro | Meaning |
 |-------|---------|
-| `ESP_WIFI_SSID` | WiFi access point name (2.4 GHz — ESP32-S3 doesn't do 5 GHz) |
+| `ESP_WIFI_SSID` | WiFi access point name (2.4 GHz — ESP32-S3 does not support 5 GHz; ESP32-C5 supports 5 GHz but is used on 2.4 GHz here) |
 | `ESP_WIFI_PASS` | WiFi password |
 | `ESP_MAXIMUM_RETRY` | Max reconnection attempts after a disconnect |
 | `WIFI_CONNECTED_BIT` | Event group bit (`BIT0 = 0x01`) signalling that DHCP has assigned an IP |
@@ -522,7 +522,7 @@ Press `Ctrl+]` to exit the monitor.
 
 ### Run Another ESP32 Example (Recommended)
 
-Running `z_pub.c` or `z_sub.c` on another ESP32-S3 on the same network will make it discoverable via scouting (if they're in peer mode or using scouting to find a router).
+Running `z_pub.c` or `z_sub.c` on another ESP32 (S3 / C5) on the same network will make it discoverable via scouting (if they're in peer mode or using scouting to find a router).
 
 ### Run a Zenoh Router or Peer
 
@@ -597,7 +597,7 @@ The scout may have completed before the Hello arrived. Increase the implicit tim
 
 ### ❌ Garbled serial output
 
-Press the ESP32-S3 reset button, or press `Ctrl+T` → `Ctrl+Y` in the monitor to reset the board.
+Press the ESP32 (S3 / C5) reset button, or press `Ctrl+T` → `Ctrl+Y` in the monitor to reset the board.
 
 ### ❌ Compilation Error: `z_scout` not found
 

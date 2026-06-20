@@ -1,4 +1,4 @@
-# z_sub.md — ESP32-S3 Zenoh Subscriber Tutorial
+# z_sub.md — ESP32 (S3 / C5) Zenoh Subscriber Tutorial
 
 [← Back to docs](../README.md) | [中文版本](../zh/z_sub.md)
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-`main/z_sub.c` is a Zenoh subscriber example for the **ESP32-S3**, built on **ESP-IDF v6.0**. It demonstrates how an embedded device connects to a WiFi network, opens a Zenoh session, subscribes to a topic, and prints incoming messages to the serial console.
+`main/z_sub.c` is a Zenoh subscriber example for the **ESP32 (S3 / C5)**, built on **ESP-IDF v6.0**. It demonstrates how an embedded device connects to a WiFi network, opens a Zenoh session, subscribes to a topic, and prints incoming messages to the serial console.
 
 ### What is a Subscriber?
 
@@ -31,7 +31,7 @@ This example implements the **subscriber** side. Pair it with `scripts/z_pub.py`
 ### Data Flow
 
 ```
-[Publisher] ---> [Zenoh Network] ---> ESP32-S3 (z_sub.c) ---> Serial Console
+[Publisher] ---> [Zenoh Network] ---> ESP32 (S3 / C5) (z_sub.c) ---> Serial Console
                                            │
                                     data_handler() callback
                                     prints key + payload
@@ -43,7 +43,7 @@ This example implements the **subscriber** side. Pair it with `scripts/z_pub.py`
 
 ### Hardware
 
-- ESP32-S3 development board (e.g., ESP32-S3-DevKitC-1)
+- ESP32 development board (ESP32-S3-DevKitC-1 or ESP32-C5-DevKitC)
 - USB-C cable (power and serial)
 
 ### Software
@@ -144,7 +144,7 @@ The guard is important because:
 
 | Macro | Meaning |
 |-------|---------|
-| `ESP_WIFI_SSID` | Your WiFi access point name (must be 2.4 GHz — ESP32-S3 doesn't support 5 GHz) |
+| `ESP_WIFI_SSID` | Your WiFi access point name (must be 2.4 GHz — ESP32-S3 does not support 5 GHz; ESP32-C5 supports 5 GHz but is used on 2.4 GHz here) |
 | `ESP_WIFI_PASS` | Your WiFi password |
 | `ESP_MAXIMUM_RETRY` | How many times to retry connection after a disconnect |
 | `WIFI_CONNECTED_BIT` | `BIT0` = `0x01` — a single bit in the FreeRTOS event group used to signal "WiFi is ready" |
@@ -741,7 +741,7 @@ When a message is published, the ESP32's serial output shows:
 
 ### Using Another ESP32 (z_pub.c)
 
-Flash `z_pub.c` to another ESP32-S3 on the same network. It publishes `[N] [ESPIDF]{ESP32} Publication from Zenoh-Pico!` every second — the subscriber will print each one.
+Flash `z_pub.c` to another ESP32 (S3 / C5) on the same network. It publishes `[N] [ESPIDF]{ESP32} Publication from Zenoh-Pico!` every second — the subscriber will print each one.
 
 ### What You Should See
 
@@ -858,7 +858,7 @@ Make sure `z_string_drop(z_string_move(&value))` is called in `data_handler`. Ev
 
 | Aspect | C Subscriber (`z_sub.c`) | Python Publisher (`z_pub.py`) |
 |--------|--------------------------|-------------------------------|
-| Platform | ESP32-S3 (embedded) | PC (any OS) |
+| Platform | ESP32 (S3 / C5) (embedded) | PC (any OS) |
 | Role | Receives messages | Sends messages |
 | Key expression | `demo/example/**` (wildcard) | `demo/example/zenoh-pico-pub` (fixed) |
 | Mode | Client (scouting) | Client (explicit `tcp/...`) |

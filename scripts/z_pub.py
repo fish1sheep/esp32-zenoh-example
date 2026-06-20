@@ -9,7 +9,7 @@ Usage — interactive mode (type line by line):
 
     python scripts/z_pub.py
 
-By default connects as client to tcp/192.168.1.26:7447, matching the C
+By default connects as client to tcp/<ROUTER_IP>:7447, matching the C
 subscriber in main/z_sub.c.  Use --mode peer for routerless P2P.
 """
 
@@ -54,7 +54,7 @@ def main():
     )
     parser.add_argument(
         "--connect",
-        default="tcp/192.168.1.26:7447",
+        default="tcp/<ROUTER_IP>:7447",
         help="Endpoint to connect to (default: %(default)s)",
     )
     parser.add_argument(
@@ -105,7 +105,7 @@ def main():
 
 
 # ── Also export a simple publish helper for scripting ────────────────────
-def publish(key: str, payload: str, connect: str = "tcp/192.168.1.26:7447"):
+def publish(key: str, payload: str, connect: str = "tcp/<ROUTER_IP>:7447"):
     """Single-shot helper: connect, publish, close.
 
     Example::
